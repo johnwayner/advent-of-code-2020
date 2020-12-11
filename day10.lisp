@@ -25,22 +25,24 @@
         finally (return (* single-diffs (1+ triple-diffs)))))
 
 (defun run-part-2 (input-seq)
-  (loop with cur-mult = 1
-        with total = 1
-        for (a b c) on (sort (copy-seq input-seq) #'<)
-        while b
-        if (= a (1+ b) (+ 2 c))
-          do (incf cur-mult cur-mult)
-        else
-          do (setf total (* total cur-mult))
-          and do (setf cur-mult 1)
-        finally (return (* cur-mult total))))
+  (apply #'*
+         (loop for (a b) on (sort (copy-seq input-seq) #'<)
+               with ones = 1
+               while a
+               if (and b (= 1 (- b a)))
+                 do (incf ones)
+               else
+                 collect (case ones
+                           (0 1)
+                           (1 1)
+                           (2 2)
+                           (3 4)
+                           (4 7)
+                           (t :x))
+                 and do (setf ones 0))))
 
-(defun run-part-2-d ()
-  (loop for (a b c d) on (sort (copy-seq +input-sample-1-1+) #'>)
-        when (and b (<= (- a b) 2))
-          collect (list a b)
-        when (and c (<= (- a c) 2))
-          collect (list a c)
-        when (and d (<= (- a d) 2))
-          collect (list a d)))
+(defun validp (seq)
+  (not
+   (loop for (a b) on seq
+         while b
+           thereis (> (- b a) 3))))
