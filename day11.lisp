@@ -47,21 +47,24 @@ L.LLLLL.LL")
                       collect (aref seat-array r c))))
 
 (defun seat-neighbors-los (seat-array row col)
-  (loop with (max-row max-col) = (array-dimensions seat-array)
-        for rdelta from -1 to 1
-        nconc (loop for cdelta from -1 to 1
-                    unless (= 0 rdelta cdelta)
-                      nconc (loop for r = row then (+ r rdelta)
-                                  for c = col then (+ c cdelta)
-                                  while (and (< r max-row)
-                                             (< c max-col)
-                                             (>= r 0)
-                                             (>= c 0))
-                                  when (and
-                                        (not (and (= r row)
-                                                  (= c col)))
-                                        (not (eql :floor (aref seat-array r c))))
-                                    return (list (aref seat-array r c))))))
+  (flet ((first-seat-in-dir (seat-array max-row max-col row col rdelta cdelta)
+           (loop for r = row then (+ r rdelta)
+                 for c = col then (+ c cdelta)
+                 while (and (< -1 r max-row)
+                            (< -1 c max-col))
+                 for seat = (aref seat-array r c)
+                 when (and (not (and (= r row)
+                                     (= c col)))
+                           (not (eql :floor seat)))
+                   return seat)))
+    (loop with (max-row max-col) = (array-dimensions seat-array)
+          for rdelta from -1 to 1
+          nconc (loop for cdelta from -1 to 1
+                      unless (= 0 rdelta cdelta)
+                        collect (first-seat-in-dir seat-array
+                                                   max-row max-col
+                                                   row col
+                                                   rdelta cdelta)))))
 
 
 ;; Part 1 rules
@@ -70,25 +73,26 @@ L.LLLLL.LL")
 ;; Otherwise, the seat's state does not change.
 (defvar *NEIGHBOR-FN* #'seat-neighbors)
 (defvar *NUM-TOLERATED* 4)
-(defun next-seat (seat seat-array row col &optional
-                                            (neighbor-fn (or *NEIGHBOR-FN* #'seat-neighbors))
-                                            (num-tolerated (or *NUM-TOLERATED* 4)))
-  (let* ((adjacent-seats (funcall neighbor-fn seat-array row col))
+(defun next-seat (seat seat-array row col)
+  "Return the next value of seat at row and col within seat-array.
+Neighbors determined by *NEIGHBOR-FN* and occupancy tolerance limited to *NUM-TOLERATED*."
+  (let* ((adjacent-seats (funcall *NEIGHBOR-FN* seat-array row col))
          (num-occupied (count :occupied adjacent-seats)))
    (case seat
     (:floor :floor)
     (:empty (if (= 0 num-occupied)
                 :occupied
                 :empty))
-    (:occupied (if (>= num-occupied num-tolerated)
+    (:occupied (if (>= num-occupied *NUM-TOLERATED*)
                    :empty
                    :occupied)))))
 
 (defun step-map (seat-array)
+  "Apply rules to seat-array returning a list with the new array and number of changes"
   (loop with new-seat-array = (make-array (array-dimensions seat-array))
         with change-count = 0
-        for row from 0 to (1- (array-dimension seat-array 0))
-        do (loop for col from 0 to (1- (array-dimension seat-array 1))
+        for row from 0 below (array-dimension seat-array 0)
+        do (loop for col from 0 below (array-dimension seat-array 1)
                  for seat = (aref seat-array row col)
                  for next-value = (next-seat seat seat-array row col)
                  do (setf (aref new-seat-array row col)
@@ -98,6 +102,7 @@ L.LLLLL.LL")
         finally (return (list new-seat-array change-count))))
 
 (defun step-map-stable (stream)
+  "Read seat map from stream. Step map until no changes. Return number of occupied seats."
   (loop for (seat-array num-changes) = (list (read-seat-map stream) 1)
           then (step-map seat-array)
         until (= 0 num-changes)
