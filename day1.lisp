@@ -6,8 +6,32 @@
 (declaim (optimize (safety 3)))
 
 
+(defun run-part-1 (&optional (num-list +input-nums+))
+  (loop with target = 2020
+	with num-count = (length num-list)
+	with num-array = (make-array (list num-count)
+				     :initial-contents (sort (copy-seq num-list) #'<))
+	for n-1 from 0 below num-count
+	  thereis (loop for n-2 downfrom (1- num-count) above n-1
+			for num1 = (aref num-array n-1)
+			for num2 = (aref num-array n-2)
+			when (= target (+ num1 num2))
+			  return (* num1 num2))))
 
-(defvar input-nums '(1810
+(defun run-part-2 (&optional (num-list +input-nums+))
+  (loop with target = 2020
+	with num-count = (length num-list)
+	with num-array = (make-array (list num-count)
+				     :initial-contents (sort (copy-seq num-list) #'<))
+	for n-1 from 0 below num-count
+	  thereis (loop for n-2 downfrom (1- num-count) above n-1
+			  thereis (loop for num3 across num-array
+					for num1 = (aref num-array n-1)
+					for num2 = (aref num-array n-2)
+					when (= target (+ num1 num2 num3))
+					  return (* num1 num2 num3)))))
+
+(defparameter +input-nums+ '(1810
 1729
 1857
 1777
@@ -207,3 +231,4 @@
 1775
 1922
 1773))
+
