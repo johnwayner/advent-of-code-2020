@@ -66,7 +66,7 @@ nearby tickets:
   (let* ((dash-pos (position #\- string))
          (lowest (parse-integer string :end dash-pos))
          (highest (parse-integer string :start (1+ dash-pos))))
-    (list lowest highest)))
+    (make-field-range lowest highest)))
 
 (defun read-fields (stream)
   (loop for line = (read-line stream nil nil)
@@ -77,10 +77,7 @@ nearby tickets:
         for name = (subseq line 0 colon-pos)
         for range-1 = (parse-range (subseq line (1+ colon-pos) or-pos))
         for range-2 = (parse-range (subseq line (+ 4 or-pos)))
-        collect (make-field name (list (make-field-range (car range-1)
-                                                         (cadr range-1))
-                                       (make-field-range (car range-2)
-                                                         (cadr range-2))))))
+        collect (make-field name (list range-1 range-2))))
 
 (defun parse-csv-to-list (csv)
   (let* ((space-sep-string (substitute #\Space #\, csv))
@@ -161,7 +158,7 @@ nearby tickets:
                                       for field in (fields my-ticket)
                                       for field-value = (nth (cdr (assoc field field-index-alist))
                                                              my-field-values)
-                                      when (search "departure" (name field))
+                                      when (search "departure" (name field)) ;technically cheating -- should be starts-with
                                         collect field-value)))
       (when my-departure-values
         (apply #'* my-departure-values))))
