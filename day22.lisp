@@ -1,7 +1,7 @@
-(defpackage :com.johnwayner.aoc-20.day-20
+(defpackage :com.johnwayner.aoc-20.day-22
   (:use :cl))
 
-(in-package :com.johnwayner.aoc-20.day-20)
+(in-package :com.johnwayner.aoc-20.day-22)
 ;;;(declaim (optimize (speed 3)))
 (declaim (optimize (safety 3) (debug 3)))
 
